@@ -41,7 +41,6 @@ cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30
 
 	
 	SetMenuBar(m_MenuBar);
-	// testing vc studio
 }
 
 cMain::~cMain() {
@@ -93,7 +92,7 @@ void cMain::OnMenuQuit(wxCommandEvent& evt) {
 		case wxID_CANCEL:
 			return;
 		default:
-			return; // test github repo again  2
+			return; 
 		}
 	}
 }
