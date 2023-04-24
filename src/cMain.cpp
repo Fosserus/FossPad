@@ -3,15 +3,20 @@
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 EVT_MENU(wxID_EXIT, cMain::OnMenuQuit)
 EVT_MENU(wxID_ABOUT, cMain::OnMenuAbout)
-EVT_MENU(wxID_SAVE, cMain::OnMenuSave)
+EVT_MENU(wxID_SAVEAS, cMain::OnMenuSaveAs)
+EVT_MENU(wxID_SAVE, cMain::OnMenuSaveFile)
 EVT_MENU(wxID_OPEN, cMain::OnMenuOpen)
+EVT_TEXT(wxID_ANY, cMain::OnTextEdited)
 wxEND_EVENT_TABLE()
 
 /*TODO:
- * Test out functionality and write down any issues; then fix them.
- * Add quick save button, and rename save to save as
- * add asterisk if text is edited
+ * Work on adding font control?
+ * Debug a little
  * */
+
+	bool hasAppended = false;
+	wxString m_currentFilePath;
+	wxString m_fileName;
 
 
 cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30), wxSize(800, 600)) {
@@ -28,6 +33,7 @@ cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30
 	m_FileMenu = new wxMenu();
 	m_FileMenu->Append(wxID_OPEN, _T("&Open"));
 	m_FileMenu->Append(wxID_SAVE, _T("&Save"));
+	m_FileMenu->Append(wxID_SAVEAS, _T("&Save As"));
 	m_FileMenu->AppendSeparator();
 	m_FileMenu->Append(wxID_EXIT, _T("&Quit"));
 	// append all to menubar
@@ -41,6 +47,15 @@ cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30
 
 	
 	SetMenuBar(m_MenuBar);
+
+	// managing shortcuts
+	wxAcceleratorEntry entries[4];
+	entries[0].Set(wxACCEL_CTRL, (int)'O', wxID_OPEN);
+	entries[1].Set(wxACCEL_CTRL, (int)'S', wxID_SAVE);
+	wxAcceleratorTable accel(2, entries);
+	this->SetAcceleratorTable(accel);
+
+
 }
 
 cMain::~cMain() {
@@ -57,7 +72,7 @@ void cMain::OnMenuOpen(wxCommandEvent& evt) {
 
 		switch (saveDialog->ShowModal()) {
 			case wxID_YES:
-				saveFile();
+				saveFileAs();
 				break;
 			case wxID_NO:
 				openFile();
@@ -72,9 +87,9 @@ void cMain::OnMenuOpen(wxCommandEvent& evt) {
 		openFile();
 	}
 }
-void cMain::OnMenuSave(wxCommandEvent& WXUNUSED(evt)) {
+void cMain::OnMenuSaveAs(wxCommandEvent& WXUNUSED(evt)) {
 
-	saveFile();
+	saveFileAs();
 }
 
 void cMain::OnMenuQuit(wxCommandEvent& evt) {
@@ -84,7 +99,7 @@ void cMain::OnMenuQuit(wxCommandEvent& evt) {
 
 		switch (saveDialog->ShowModal()) {
 		case wxID_YES:
-			saveFile();
+			saveFileAs();
 			break;
 		case wxID_NO:
 			Destroy();
@@ -94,6 +109,9 @@ void cMain::OnMenuQuit(wxCommandEvent& evt) {
 		default:
 			return; 
 		}
+	}
+	else {
+		Destroy();
 	}
 }
 
@@ -107,8 +125,16 @@ void cMain::OnMenuAbout(wxCommandEvent& evt) {
 	}
 }
 
+void cMain::OnTextEdited(wxCommandEvent& evt) {
+	if (!hasAppended && m_txt->IsModified()) {
+		this->SetTitle(this->GetTitle() + "*");
+		hasAppended = true;
+	}
+	
+
+}
+
 void cMain::openFile() {
-	wxString file;
 
 	wxFileDialog openFileDialog(this, _("Open file"), "", "",
 		"txt files (*.txt)|*.txt", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
@@ -117,25 +143,47 @@ void cMain::openFile() {
 		return;	
 	}
 
-	file = openFileDialog.GetPath();
+	m_currentFilePath = openFileDialog.GetPath();
 
 
-	wxString filename = openFileDialog.GetFilename();
-	this->SetTitle(filename + " | FossPad");
+	m_fileName = openFileDialog.GetFilename();
+	this->SetTitle(m_fileName + " | FossPad");
 
-	m_txt->LoadFile(file);
+	m_txt->LoadFile(m_currentFilePath);
+	hasAppended = false;
 }
 
 void cMain::saveFile() {
+	if (m_currentFilePath.empty()) {
+		saveFileAs();
+	}
+	else {
+		this->SetTitle(m_fileName + " | FossPad");
+		m_txt->SaveFile(m_currentFilePath);
+		hasAppended = false;
+	}
+
+}
+
+void cMain::saveFileAs() {
 	wxFileDialog saveFileDialog(this, _("Save TXT file"), "", "",
 		"TXT files (*.txt)|*.txt", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
 	if (saveFileDialog.ShowModal() == wxID_OK) {
-			wxString file = saveFileDialog.GetPath();
-			m_txt->SaveFile(file);
+			m_currentFilePath = saveFileDialog.GetPath();
+			m_fileName = saveFileDialog.GetFilename();
+			this->SetTitle(m_fileName + " | FossPad");
+			m_txt->SaveFile(m_currentFilePath);
+			hasAppended = false;
 	}
 	else {
 		return;
 	}
 	
 }
+
+void cMain::OnMenuSaveFile(wxCommandEvent& evt) {
+	
+	saveFile();
+}
+

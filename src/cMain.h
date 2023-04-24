@@ -23,11 +23,14 @@ public:
 
 	
 	void OnMenuOpen(wxCommandEvent& evt);
-	void OnMenuSave(wxCommandEvent& WXUNUSED(evt));
+	void OnMenuSaveAs(wxCommandEvent& WXUNUSED(evt));
 	void OnMenuQuit(wxCommandEvent& evt);
 	void OnMenuAbout(wxCommandEvent& evt);
+	void OnTextEdited(wxCommandEvent& evt);
 	void openFile();
 	void saveFile();
+	void saveFileAs();
+	void OnMenuSaveFile(wxCommandEvent& evt);
 
 	wxDECLARE_EVENT_TABLE();
 };
