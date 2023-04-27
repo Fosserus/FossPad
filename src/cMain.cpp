@@ -6,18 +6,17 @@ EVT_MENU(wxID_ABOUT, cMain::OnMenuAbout)
 EVT_MENU(wxID_SAVEAS, cMain::OnMenuSaveAs)
 EVT_MENU(wxID_SAVE, cMain::OnMenuSaveFile)
 EVT_MENU(wxID_OPEN, cMain::OnMenuOpen)
+EVT_MENU(wxID_UNDO, cMain::undo)
+EVT_MENU(wxID_CUT, cMain::cut)
+EVT_MENU(wxID_COPY, cMain::copy)
+EVT_MENU(wxID_PASTE, cMain::paste)
+EVT_MENU_OPEN(cMain::OnTextSelected)
 EVT_TEXT(wxID_ANY, cMain::OnTextEdited)
 wxEND_EVENT_TABLE()
-
-/*TODO:
- * Work on adding font control?
- * Debug a little
- * */
 
 	bool hasAppended = false;
 	wxString m_currentFilePath;
 	wxString m_fileName;
-
 
 cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30), wxSize(800, 600)) {
 	// you can add items to be in the frame here
@@ -31,25 +30,36 @@ cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30
 	
 	// File Menu
 	m_FileMenu = new wxMenu();
-	m_FileMenu->Append(wxID_OPEN, _T("&Open"));
-	m_FileMenu->Append(wxID_SAVE, _T("&Save"));
-	m_FileMenu->Append(wxID_SAVEAS, _T("&Save As"));
+	m_FileMenu->Append(wxID_OPEN, _T("&Open\tCtrl+O"));
+	m_FileMenu->Append(wxID_SAVE, _T("&Save\tCtrl+S"));
+	m_FileMenu->Append(wxID_SAVEAS, _T("&Save As\tCtrl+S"));
 	m_FileMenu->AppendSeparator();
 	m_FileMenu->Append(wxID_EXIT, _T("&Quit"));
 	// append all to menubar
 	m_MenuBar->Append(m_FileMenu, _T("&File"));
 
+	// Edit Menu
+	m_EditMenu = new wxMenu();
+	m_EditMenu->Append(wxID_UNDO, _T("&Undo\tCtrl+Z"));
+	m_EditMenu->AppendSeparator();
+	m_EditMenu->Append(wxID_CUT, _T("&Cut\tCtrl+X"));
+	m_EditMenu->Append(wxID_COPY, _T("&Copy\tCtrl+C"));
+	m_EditMenu->Append(wxID_PASTE, _T("&Paste\tCtrl+V"));
+	m_EditMenu->Append(wxID_DELETE, _T("&Delete\tDel"));
+	m_EditMenu->Enable(wxID_UNDO, false);
+	m_EditMenu->Enable(wxID_CUT, false);
+	m_MenuBar->Append(m_EditMenu, _T("&Edit"));
+
+
 	// Help Menu
 	m_HelpMenu = new wxMenu();
 	m_HelpMenu->Append(wxID_ABOUT, _T("&About"));
-	// append all to menubar
 	m_MenuBar->Append(m_HelpMenu, _T("&Help"));
 
-	
 	SetMenuBar(m_MenuBar);
 
 	// managing shortcuts
-	wxAcceleratorEntry entries[4];
+	wxAcceleratorEntry entries[2];
 	entries[0].Set(wxACCEL_CTRL, (int)'O', wxID_OPEN);
 	entries[1].Set(wxACCEL_CTRL, (int)'S', wxID_SAVE);
 	wxAcceleratorTable accel(2, entries);
@@ -59,7 +69,21 @@ cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30
 }
 
 cMain::~cMain() {
-	Destroy();
+	if (!m_txt->IsEmpty() && m_txt->IsModified()) {
+		saveDialog = new wxMessageDialog(this, "Do you want to save first?",
+			"Save", wxYES_NO);
+
+		switch (saveDialog->ShowModal()) {
+		case wxID_YES:
+			saveFile();
+			break;
+		case wxID_NO:
+			return;
+			break;
+		default:
+			return;
+		}
+	}
 }
 
 
@@ -88,7 +112,6 @@ void cMain::OnMenuOpen(wxCommandEvent& evt) {
 	}
 }
 void cMain::OnMenuSaveAs(wxCommandEvent& WXUNUSED(evt)) {
-
 	saveFileAs();
 }
 
@@ -115,10 +138,8 @@ void cMain::OnMenuQuit(wxCommandEvent& evt) {
 	}
 }
 
-
-
 void cMain::OnMenuAbout(wxCommandEvent& evt) {
-	abtDialog = new wxMessageDialog(this, "FossPad is a simple word processing app created by a cool dude.", 
+	abtDialog = new wxMessageDialog(this, "FossPad is a simple word processing app for simple people.\nCreated with wxWidgets v3.2.2.1.", 
 		"About FossPad");
 	if (abtDialog->ShowModal() == wxID_OK) {
 		abtDialog->Destroy();
@@ -131,7 +152,24 @@ void cMain::OnTextEdited(wxCommandEvent& evt) {
 		hasAppended = true;
 	}
 	
+	if (m_txt->CanUndo()) {
+		m_EditMenu->Enable(wxID_UNDO, true);
+	}
+	else { 
+		m_EditMenu->Enable(wxID_UNDO, false);
+	}
+}
 
+void cMain::OnTextSelected(wxMenuEvent& evt) {
+
+	if (m_txt->HasSelection()) {
+		m_EditMenu->Enable(wxID_CUT, true);
+		m_EditMenu->Enable(wxID_COPY, true);
+	}
+	else {
+		m_EditMenu->Enable(wxID_CUT, false);
+		m_EditMenu->Enable(wxID_COPY, false);
+	}
 }
 
 void cMain::openFile() {
@@ -179,11 +217,33 @@ void cMain::saveFileAs() {
 	else {
 		return;
 	}
-	
 }
 
 void cMain::OnMenuSaveFile(wxCommandEvent& evt) {
-	
 	saveFile();
+}
+
+void cMain::undo(wxCommandEvent& evt) {
+	if (m_txt->CanUndo()) {
+		m_txt->Undo();
+	}
+}
+
+void cMain::cut(wxCommandEvent& evt) {
+	if (m_txt->CanCut()) {
+		m_txt->Cut();
+	}
+}
+
+void cMain::copy(wxCommandEvent& evt) {
+	if (m_txt->CanCopy()) {
+		m_txt->Copy();
+	}
+}
+
+void cMain::paste(wxCommandEvent& evt) {
+	if (m_txt->CanPaste()) {
+		m_txt->Paste();
+	}
 }
 
