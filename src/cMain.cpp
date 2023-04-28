@@ -1,3 +1,13 @@
+
+/*
+Copyright 2023, Nathan Powell
+
+Copying and distribution of this file, with or without modification, 
+are permitted in any medium without royalty, provided the copyright notice and this notice are preserved. 
+This file is offered as-is, without any warranty.
+
+*/
+
 #include "cMain.h"
 
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
