@@ -45,7 +45,6 @@ cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Untitled | FossPad", wxPoint(30, 30
 	m_EditMenu->Append(wxID_CUT, _T("&Cut\tCtrl+X"));
 	m_EditMenu->Append(wxID_COPY, _T("&Copy\tCtrl+C"));
 	m_EditMenu->Append(wxID_PASTE, _T("&Paste\tCtrl+V"));
-	m_EditMenu->Append(wxID_DELETE, _T("&Delete\tDel"));
 	m_EditMenu->Enable(wxID_UNDO, false);
 	m_EditMenu->Enable(wxID_CUT, false);
 	m_MenuBar->Append(m_EditMenu, _T("&Edit"));
@@ -246,4 +245,6 @@ void cMain::paste(wxCommandEvent& evt) {
 		m_txt->Paste();
 	}
 }
+
+
 

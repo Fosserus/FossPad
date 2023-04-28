@@ -40,8 +40,6 @@ public:
 	void openFile();
 	void saveFile();
 	void saveFileAs();
-
-	
 	void OnMenuSaveFile(wxCommandEvent& evt);
 
 	wxDECLARE_EVENT_TABLE();
