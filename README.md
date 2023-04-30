@@ -9,5 +9,5 @@ Basically, it's a simple text editor. That's it.
 This project was written in wxWidgets v3.2.2.1.
 
 ### Releases
-Currently I have a Windows release available, but I'm working on getting a Linux one out as well.
+Currently I have Windows and Linux releases available.
 I have no plans for a Mac release at this time.
